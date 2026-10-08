@@ -18,21 +18,29 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Firma no válida." }, { status: 400 });
   }
 
+  async function activateFromMetadata(metadata?: { siteId?: string; userId?: string }, customer?: string | null, subscription?: string | null) {
+    const siteId = metadata?.siteId;
+    if (!siteId) return;
+    const site = await db.getSite(siteId);
+    if (!site) return;
+    await db.updateSite({
+      ...site,
+      plan: "active",
+      stripeCustomerId: customer || site.stripeCustomerId,
+      stripeSubscriptionId: subscription || site.stripeSubscriptionId,
+    });
+    if (metadata?.userId) await db.markRewardsReady(metadata.userId, site.id);
+  }
+
   if (event.type === "checkout.session.completed") {
     const session = event.data.object as { metadata?: { siteId?: string; userId?: string }; customer?: string; subscription?: string };
-    const siteId = session.metadata?.siteId;
-    if (siteId) {
-      const site = await db.getSite(siteId);
-      if (site) {
-        await db.updateSite({
-          ...site,
-          plan: "active",
-          stripeCustomerId: (session.customer as string) || site.stripeCustomerId,
-          stripeSubscriptionId: (session.subscription as string) || site.stripeSubscriptionId,
-        });
-        if (session.metadata?.userId) await db.markRewardsReady(session.metadata.userId, site.id);
-      }
-    }
+    await activateFromMetadata(session.metadata, session.customer, session.subscription);
+  }
+
+  if (event.type === "invoice.paid") {
+    const invoice = event.data.object as { subscription?: string; parent?: { subscription_details?: { metadata?: { siteId?: string; userId?: string } } } };
+    const metadata = invoice.parent?.subscription_details?.metadata;
+    if (metadata?.siteId) await activateFromMetadata(metadata, null, invoice.subscription || null);
   }
 
   if (event.type === "customer.subscription.deleted") {
