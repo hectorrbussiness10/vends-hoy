@@ -20,5 +20,6 @@ export default async function SitePage({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const site = await db.getSiteBySlug(slug);
   if (!site) notFound();
-  return <BusinessSite content={site.content} slug={slug} paused={!siteLive(site)} />;
+  const owner = await db.getProfile(site.ownerId);
+  return <BusinessSite content={site.content} slug={slug} paused={!siteLive(site, owner?.email)} />;
 }

@@ -14,9 +14,9 @@ const sans = Figtree({
 });
 
 export const metadata: Metadata = {
-  title: "Vends Hoy | Webs de negocio listas para vender",
+  title: "Ideia Builders | Webs de negocio listas para vender",
   description:
-    "Pegue el enlace de su local, unas fotos o un brief. En minutos tiene una web con catálogo, reseñas y reservas, y un panel para dirigirla sin claves técnicas. Un día de prueba. 150 € al mes.",
+    "Pegue el enlace de su local, unas fotos o un brief. En minutos tiene una web con catálogo, reseñas y reservas, y un panel para dirigirla. La prueba de un día exige iniciar sesión. Luego, 150 € al mes.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

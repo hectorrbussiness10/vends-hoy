@@ -4,6 +4,7 @@ import { db } from "@/lib/store";
 import { generateSiteContent } from "@/lib/generate";
 import { hashSecret, randomPassword, referralCode, slugify } from "@/lib/crypto";
 import { sanitizeSiteContent } from "@/lib/site-content";
+import { isCreatorEmail } from "@/lib/creators";
 
 export async function POST(request: Request) {
   const user = await currentUser();
@@ -41,7 +42,10 @@ export async function POST(request: Request) {
   if (await db.slugTaken(slug)) slug = `${slug}-${referralCode().slice(0, 4)}`;
   const panelPassword = randomPassword();
   const now = new Date();
-  const trialEndsAt = new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString();
+  const founder = isCreatorEmail(user.email);
+  const trialEndsAt = founder
+    ? new Date("2099-12-31T00:00:00.000Z").toISOString()
+    : new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString();
   const id = crypto.randomUUID();
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
   content.seo.website = `${appUrl}/s/${slug}`;
@@ -65,7 +69,7 @@ export async function POST(request: Request) {
     panelPasswordHash: hashSecret(panelPassword),
     mustChangePassword: true,
     trialEndsAt,
-    plan: "trial" as const,
+    plan: founder ? ("active" as const) : ("trial" as const),
     stripeCustomerId: null,
     stripeSubscriptionId: null,
     referralCode: referralCode(),

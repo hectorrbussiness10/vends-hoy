@@ -21,7 +21,8 @@ export async function PUT(request: Request, { params }: { params: Promise<{ slug
   if (!site || !(await isPanelAuthed(slug, site))) {
     return NextResponse.json({ error: "Entre en el panel." }, { status: 401 });
   }
-  if (!canEdit(site)) {
+  const owner = await db.getProfile(site.ownerId);
+  if (!canEdit(site, owner?.email)) {
     return NextResponse.json({ error: "La prueba ha terminado. Suscríbase para seguir editando." }, { status: 402 });
   }
   const body = await request.json();

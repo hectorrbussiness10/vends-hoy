@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/store";
 import { isPanelAuthed } from "@/lib/auth";
 import { canEdit, PROMPTS_PER_DAY } from "@/lib/access";
+import { isCreatorEmail } from "@/lib/creators";
 import { previewPromptEdit } from "@/lib/generate";
 import { snapshotAndApply } from "@/lib/versions";
 import { todayKey } from "@/lib/crypto";
@@ -13,11 +14,13 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
   if (!site || !(await isPanelAuthed(slug, site))) {
     return NextResponse.json({ error: "Entre en el panel." }, { status: 401 });
   }
-  if (!canEdit(site)) {
+  const owner = await db.getProfile(site.ownerId);
+  if (!canEdit(site, owner?.email)) {
     return NextResponse.json({ error: "La prueba o la suscripción no están activas." }, { status: 402 });
   }
   const used = await db.countPromptsToday(site.id, todayKey());
-  if (used >= PROMPTS_PER_DAY) {
+  const founder = isCreatorEmail(owner?.email);
+  if (!founder && used >= PROMPTS_PER_DAY) {
     return NextResponse.json({ error: "Hoy ya ha usado las 5 ediciones por escrito." }, { status: 429 });
   }
   const body = (await request.json().catch(() => null)) as { prompt?: string } | null;

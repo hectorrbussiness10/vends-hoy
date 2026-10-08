@@ -11,7 +11,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
   if (!site || !(await isPanelAuthed(slug, site))) {
     return NextResponse.json({ error: "Entre en el panel." }, { status: 401 });
   }
-  if (!canEdit(site)) {
+  const owner = await db.getProfile(site.ownerId);
+  if (!canEdit(site, owner?.email)) {
     return NextResponse.json({ error: "Suscríbase para restaurar versiones." }, { status: 402 });
   }
   const body = (await request.json().catch(() => null)) as { label?: "initial" | "v1" | "v2" } | null;

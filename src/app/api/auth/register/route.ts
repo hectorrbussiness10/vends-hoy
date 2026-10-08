@@ -43,5 +43,6 @@ export async function POST(request: Request) {
     });
   }
   await setUserSession(profile.id);
+  await db.recordLogin(profile);
   return NextResponse.json({ ok: true, referralCode: profile.referralCode });
 }

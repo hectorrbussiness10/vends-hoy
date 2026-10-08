@@ -6,7 +6,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
   const { slug } = await params;
   const site = await db.getSiteBySlug(slug);
   if (!site) return NextResponse.json({ error: "Web no encontrada." }, { status: 404 });
-  if (!siteLive(site)) return NextResponse.json({ error: "Esta web está en pausa." }, { status: 403 });
+  const owner = await db.getProfile(site.ownerId);
+  if (!siteLive(site, owner?.email)) return NextResponse.json({ error: "Esta web está en pausa." }, { status: 403 });
   const body = (await request.json().catch(() => null)) as Record<string, string> | null;
   const name = body?.nombre?.trim();
   if (!name) return NextResponse.json({ error: "Indique un nombre." }, { status: 400 });

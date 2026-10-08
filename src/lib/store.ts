@@ -1,7 +1,8 @@
 import { mkdir, readFile, writeFile } from "fs/promises";
 import path from "path";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import { emptyStore, type Booking, type Profile, type PromptEvent, type ReferralReward, type Site, type StoreData } from "@/lib/models";
+import { emptyStore, type Booking, type LoginEvent, type Profile, type PromptEvent, type ReferralReward, type Site, type StoreData } from "@/lib/models";
+import { isCreatorEmail } from "@/lib/creators";
 import { sanitizeSiteContent } from "@/lib/site-content";
 
 const FILE = path.join(process.cwd(), "data", "vends-hoy.json");
@@ -27,6 +28,7 @@ async function readLocal(): Promise<StoreData> {
       bookings: parsed.bookings ?? [],
       promptEvents: parsed.promptEvents ?? [],
       rewards: parsed.rewards ?? [],
+      loginEvents: parsed.loginEvents ?? [],
     };
   } catch {
     return emptyStore();
@@ -446,6 +448,106 @@ export const db = {
         }
       });
     });
+  },
+
+  async recordLogin(profile: Profile) {
+    const event: LoginEvent = {
+      id: crypto.randomUUID(),
+      profileId: profile.id,
+      email: profile.email,
+      createdAt: new Date().toISOString(),
+    };
+    const remote = supabase();
+    if (remote) {
+      await remote.from("login_events").insert({
+        id: event.id,
+        profile_id: event.profileId,
+        email: event.email,
+        created_at: event.createdAt,
+      });
+      return;
+    }
+    await mutateLocal((data) => {
+      data.loginEvents.push(event);
+    });
+  },
+
+  async adminStats() {
+    const remote = supabase();
+    const creatorFilter = (email: string) => isCreatorEmail(email);
+    if (remote) {
+      const [{ data: profiles }, { data: sites }, { data: logins }, { data: prompts }] = await Promise.all([
+        remote.from("profiles").select("id, email, name, created_at"),
+        remote.from("sites").select("id, slug, owner_id, plan, must_change_password, created_at, content, initial_content"),
+        remote.from("login_events").select("profile_id, email, created_at"),
+        remote.from("prompt_events").select("site_id, applied"),
+      ]);
+      const people = profiles ?? [];
+      const webs = sites ?? [];
+      const loginRows = logins ?? [];
+      const promptRows = prompts ?? [];
+      const emailById = new Map(people.map((item) => [item.id, String(item.email)]));
+      const configured = webs.filter((site) => {
+        const applied = promptRows.some((row) => row.site_id === site.id && row.applied);
+        return !site.must_change_password || applied;
+      });
+      return {
+        accounts: people.length,
+        loginsUnique: new Set(loginRows.map((row) => row.profile_id)).size,
+        loginsTotal: loginRows.length,
+        trialsStarted: webs.filter((site) => !creatorFilter(emailById.get(site.owner_id) || "")).length,
+        sitesConfigured: configured.filter((site) => !creatorFilter(emailById.get(site.owner_id) || "")).length,
+        paying: webs.filter((site) => site.plan === "active" && !creatorFilter(emailById.get(site.owner_id) || "")).length,
+        recentLogins: loginRows
+          .slice()
+          .sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)))
+          .slice(0, 12)
+          .map((row) => ({ email: row.email, at: row.created_at })),
+        sites: webs.map((site) => ({
+          slug: site.slug,
+          name: (site.content as { name?: string } | null)?.name || site.slug,
+          email: emailById.get(site.owner_id) || "",
+          plan: site.plan,
+          configured: !site.must_change_password,
+          createdAt: site.created_at,
+        })),
+      };
+    }
+    const local = await readLocal();
+    const configured = local.sites.filter((site) => {
+      const applied = local.promptEvents.some((event) => event.siteId === site.id && event.applied);
+      return !site.mustChangePassword || applied;
+    });
+    return {
+      accounts: local.profiles.length,
+      loginsUnique: new Set(local.loginEvents.map((item) => item.profileId)).size,
+      loginsTotal: local.loginEvents.length,
+      trialsStarted: local.sites.filter((site) => {
+        const owner = local.profiles.find((item) => item.id === site.ownerId);
+        return !creatorFilter(owner?.email || "");
+      }).length,
+      sitesConfigured: configured.filter((site) => {
+        const owner = local.profiles.find((item) => item.id === site.ownerId);
+        return !creatorFilter(owner?.email || "");
+      }).length,
+      paying: local.sites.filter((site) => {
+        const owner = local.profiles.find((item) => item.id === site.ownerId);
+        return site.plan === "active" && !creatorFilter(owner?.email || "");
+      }).length,
+      recentLogins: local.loginEvents
+        .slice()
+        .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+        .slice(0, 12)
+        .map((item) => ({ email: item.email, at: item.createdAt })),
+      sites: local.sites.map((site) => ({
+        slug: site.slug,
+        name: site.content.name,
+        email: local.profiles.find((item) => item.id === site.ownerId)?.email || "",
+        plan: site.plan,
+        configured: !site.mustChangePassword,
+        createdAt: site.createdAt,
+      })),
+    };
   },
 
   usingSupabase(): boolean {

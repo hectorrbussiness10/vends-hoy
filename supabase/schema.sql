@@ -118,3 +118,15 @@ create or replace view public.site_public
   from public.sites;
 
 grant select on public.site_public to anon, authenticated;
+
+create table if not exists public.login_events (
+  id uuid primary key default gen_random_uuid(),
+  profile_id uuid references public.profiles(id) on delete cascade,
+  email text not null,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists login_events_created_at_idx on public.login_events (created_at desc);
+create index if not exists login_events_profile_id_idx on public.login_events (profile_id);
+
+alter table public.login_events enable row level security;

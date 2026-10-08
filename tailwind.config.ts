@@ -14,6 +14,7 @@ const config: Config = {
         foam: "var(--foam, #EFE6DA)",
         night: "#0B0C10",
         steel: "#1B1F2A",
+        paper: "var(--paper, #F4F0EA)",
       },
       fontFamily: {
         display: ["var(--font-display)", "Georgia", "serif"],

@@ -74,12 +74,20 @@ export type ReferralReward = {
   createdAt: string;
 };
 
+export type LoginEvent = {
+  id: string;
+  profileId: string;
+  email: string;
+  createdAt: string;
+};
+
 export type StoreData = {
   profiles: Profile[];
   sites: Site[];
   bookings: Booking[];
   promptEvents: PromptEvent[];
   rewards: ReferralReward[];
+  loginEvents: LoginEvent[];
 };
 
 export const emptyStore = (): StoreData => ({
@@ -88,4 +96,5 @@ export const emptyStore = (): StoreData => ({
   bookings: [],
   promptEvents: [],
   rewards: [],
+  loginEvents: [],
 });

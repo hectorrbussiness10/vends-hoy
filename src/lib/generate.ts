@@ -1,10 +1,10 @@
-import OpenAI from "openai";
+import { llm, llmModel } from "@/lib/llm";
 import type { Sector, SiteContent } from "@/lib/content-types";
 import { SECTOR_LABELS } from "@/lib/content-types";
 import { osmEmbed, phoneDigits, sanitizeSiteContent, seedFromMartin } from "@/lib/site-content";
 import { lookupPlace } from "@/lib/places";
 
-const SYSTEM = `Eres el generador de Vends Hoy. Devuelves SOLO JSON válido con el contrato SiteContent.
+const SYSTEM = `Eres el generador de Ideia Builders. Devuelves SOLO JSON válido con el contrato SiteContent.
 Reglas:
 - Partes de la plantilla Martin Tattoo (misma estructura: portada, catálogo, reseñas, locales, horario, reserva, colores).
 - Adaptas textos, categorías y tono al oficio del cliente. Si es una tienda de muebles, habla de piezas y presupuestos, no de tatuajes.
@@ -18,10 +18,8 @@ Reglas:
 - Español de España, formal, comercial, sin emojis.
 - sector uno de: restaurante, barberia, tattoo, fisio, urgencias, tienda, muebles, salon, otro.`;
 
-function client(): OpenAI | null {
-  const key = process.env.OPENAI_API_KEY;
-  if (!key) return null;
-  return new OpenAI({ apiKey: key });
+function client() {
+  return llm();
 }
 
 const SECTOR_PHOTOS: Record<Sector, string[]> = {
@@ -285,7 +283,7 @@ export async function generateSiteContent(input: GenerateInput): Promise<SiteCon
 
   try {
     const completion = await ai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: llmModel(),
       temperature: 0.4,
       response_format: { type: "json_object" },
       messages: [
@@ -328,7 +326,7 @@ export async function previewPromptEdit(current: SiteContent, prompt: string): P
 
   try {
     const completion = await ai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: llmModel(),
       temperature: 0.3,
       response_format: { type: "json_object" },
       messages: [
@@ -341,7 +339,7 @@ Solo puedes:
 - cambiar estilo, textos, colores, fotos, orden, catálogo, reseñas, horario, locales, reservas
 - activar o desactivar features de la plantilla (catalog, reviews, booking, hours, locations)
 - añadir funciones de front que se alimenten del panel (filtros de catálogo, destacados, aviso de agotado, formulario de reserva)
-Prohibido: pedir API keys, webhooks de terceros en el cliente, analytics con secretos, pagos con Stripe en la web del negocio (los pagos de Vends Hoy son de la plataforma).`,
+Prohibido: pedir API keys, webhooks de terceros en el cliente, analytics con secretos, pagos con Stripe en la web del negocio (los pagos de Ideia Builders son de la plataforma).`,
         },
         {
           role: "user",

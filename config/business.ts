@@ -315,7 +315,7 @@ const martinTattoo: BusinessConfig = {
     website: "https://martin-tattoo-malaga.vercel.app",
   },
   support: {
-    agencyName: "Vends Hoy Webs",
+    agencyName: "Ideia Builders",
     whatsappHref:
       "https://wa.me/34600000000?text=Quiero%20activar%20el%20m%C3%B3dulo%20de%20IA%20de%20Martin%20Tattoo",
     email: "soporte@vendshoywebs.es",

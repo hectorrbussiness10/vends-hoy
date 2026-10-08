@@ -3,6 +3,7 @@ import { currentUser } from "@/lib/auth";
 import { db } from "@/lib/store";
 import { appUrl, monthlyPriceId, stripe } from "@/lib/stripe";
 import { PRICE_EUR, REFERRAL_DISCOUNT_EUR } from "@/lib/access";
+import { isCreatorEmail } from "@/lib/creators";
 
 export async function POST(request: Request) {
   const user = await currentUser();
@@ -11,6 +12,10 @@ export async function POST(request: Request) {
   const site = body?.slug ? await db.getSiteBySlug(body.slug) : (await db.listSitesByOwner(user.id))[0];
   if (!site || site.ownerId !== user.id) {
     return NextResponse.json({ error: "Web no encontrada." }, { status: 404 });
+  }
+
+  if (isCreatorEmail(user.email)) {
+    return NextResponse.json({ error: "Las cuentas de estudio no pagan." }, { status: 400 });
   }
 
   const client = stripe();

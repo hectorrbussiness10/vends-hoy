@@ -63,6 +63,7 @@ export async function loginUser(email: string, password: string): Promise<Profil
   const profile = await db.getProfileByEmail(email);
   if (!profile || !verifySecret(password, profile.passwordHash)) return null;
   await setUserSession(profile.id);
+  await db.recordLogin(profile);
   return profile;
 }
 

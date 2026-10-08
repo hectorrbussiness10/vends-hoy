@@ -321,7 +321,7 @@ export function BusinessSite({
           <p>
             {content.legalName} · {content.city}
           </p>
-          <p>Web alojada por Vends Hoy</p>
+          <p>Web alojada por Ideia Builders</p>
         </div>
       </footer>
 

@@ -1,15 +1,17 @@
 import type { Site } from "@/lib/models";
+import { isCreatorEmail } from "@/lib/creators";
 
 export function trialOpen(site: Site): boolean {
   return new Date(site.trialEndsAt).getTime() > Date.now();
 }
 
-export function siteLive(site: Site): boolean {
+export function siteLive(site: Site, ownerEmail?: string | null): boolean {
+  if (isCreatorEmail(ownerEmail)) return true;
   return site.plan === "active" || trialOpen(site);
 }
 
-export function canEdit(site: Site): boolean {
-  return siteLive(site);
+export function canEdit(site: Site, ownerEmail?: string | null): boolean {
+  return siteLive(site, ownerEmail);
 }
 
 export function trialHoursLeft(site: Site): number {

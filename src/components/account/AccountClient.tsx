@@ -6,16 +6,16 @@ export function AccountClient({ inviteUrl, rewards }: { inviteUrl: string; rewar
   const [copied, setCopied] = useState(false);
 
   return (
-    <div className="mt-8 rounded-[28px] border border-white/10 p-6">
-      <p className="text-sm text-cream/70">
-        Enlace de invitación. Si el negocio invitado se suscribe, usted recibe 50 € de descuento el mes siguiente,
-        solo durante un mes, por cada invitado que pague. Créditos pendientes: {rewards}.
+    <div className="mt-8 rounded-[28px] border border-ink/[0.08] bg-white p-6">
+      <p className="text-sm leading-relaxed text-ink/65">
+        Enlace de invitación. Si el negocio invitado se suscribe, usted recibe 50 € de descuento el mes siguiente, solo
+        durante un mes, por cada invitado que pague. Créditos pendientes: {rewards}.
       </p>
       <div className="mt-4 flex flex-wrap gap-3">
-        <code className="rounded-2xl bg-white/5 px-4 py-3 text-xs">{inviteUrl}</code>
+        <code className="rounded-2xl bg-paper px-4 py-3 text-xs">{inviteUrl}</code>
         <button
           type="button"
-          className="rounded-full bg-cream px-4 py-2 text-sm font-semibold text-night"
+          className="rounded-full bg-ink px-4 py-2 text-sm font-semibold text-paper"
           onClick={async () => {
             await navigator.clipboard.writeText(inviteUrl);
             setCopied(true);
@@ -55,7 +55,7 @@ export function SubscribeButton({ slug }: { slug: string }) {
         type="button"
         onClick={() => void pay()}
         disabled={busy}
-        className="rounded-full bg-gold px-4 py-2 text-sm font-semibold text-night disabled:opacity-50"
+        className="rounded-full bg-ink px-4 py-2 text-sm font-semibold text-paper disabled:opacity-50"
       >
         {busy ? "Abriendo…" : "Suscribirse 150 €"}
       </button>

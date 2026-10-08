@@ -3,13 +3,14 @@
 @tailwind utilities;
 
 :root {
-  --ink: #14110f;
+  --ink: #1a1814;
   --cream: #f7f2eb;
   --sand: #e6d8c8;
-  --terracotta: #9c3b2e;
-  --gold: #c6a15b;
+  --terracotta: #c45c3e;
+  --gold: #b08948;
   --olive: #3e463c;
   --foam: #efe6da;
+  --paper: #f4f0ea;
 }
 
 html {
@@ -17,8 +18,8 @@ html {
 }
 
 body {
-  background: #07080c;
-  color: #f7f2eb;
+  background: var(--paper);
+  color: var(--ink);
 }
 
 .site-shell {
