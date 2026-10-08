@@ -5,6 +5,8 @@ out
 .env
 .env.local
 .env*.local
+.env*.tmp
+.stripe-ids.tmp
 data/*.json
 public/uploads
 *.tsbuildinfo
